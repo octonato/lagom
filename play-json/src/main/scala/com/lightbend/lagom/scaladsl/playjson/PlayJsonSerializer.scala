@@ -17,20 +17,17 @@ import scala.collection.immutable
  *
  * Akka serializer using the registered play-json serializers and migrations
  */
-private[lagom] final class PlayJsonSerializer(val system: ExtendedActorSystem, registry: JsonSerializerRegistry)
+private[lagom] final class PlayJsonSerializer(
+  val system: ExtendedActorSystem,
+  serializer: JsonSerializer[_],
+  migrations: Map[String, JsonMigration]
+)
   extends SerializerWithStringManifest
   with BaseSerializer {
 
   private val charset = StandardCharsets.UTF_8
   private val log = Logging.getLogger(system, getClass)
   private val isDebugEnabled = log.isDebugEnabled
-
-  private val serializers: Map[String, Format[AnyRef]] = {
-    registry.serializers.map(entry =>
-      (entry.entityClass.getName, entry.format.asInstanceOf[Format[AnyRef]])).toMap
-  }
-
-  private def migrations: Map[String, JsonMigration] = registry.migrations
 
   override def manifest(o: AnyRef): String = {
     val className = o.getClass.getName
@@ -43,12 +40,7 @@ private[lagom] final class PlayJsonSerializer(val system: ExtendedActorSystem, r
   override def toBinary(o: AnyRef): Array[Byte] = {
     val startTime = if (isDebugEnabled) System.nanoTime else 0L
 
-    val (_, manifestClassName: String) = parseManifest(manifest(o))
-
-    val format = serializers.getOrElse(
-      manifestClassName,
-      throw new RuntimeException(s"Missing play-json serializer for [$manifestClassName]")
-    )
+    val format = serializer.format.asInstanceOf[Format[AnyRef]]
 
     val json = format.writes(o)
     val result = Json.stringify(json).getBytes(charset)
@@ -80,11 +72,7 @@ private[lagom] final class PlayJsonSerializer(val system: ExtendedActorSystem, r
       case _ => manifestClassName
     }
 
-    val format = serializers.getOrElse(
-      migratedManifest,
-      throw new RuntimeException(s"Missing play-json serializer for [$migratedManifest], " +
-        s"defined are [${serializers.keys.mkString(", ")}]")
-    )
+    val format = serializer.format.asInstanceOf[Format[AnyRef]]
 
     val json = Json.parse(bytes) match {
       case jsObject: JsObject => jsObject
