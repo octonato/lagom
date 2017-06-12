@@ -15,6 +15,9 @@ import scala.collection.immutable.{ Seq, SortedMap }
 
 sealed trait GenericEvent
 case class SpecificEvent1(x: Int) extends GenericEvent
+object SpecificEvent1 {
+  implicit val specificEvent1Format = Json.format[SpecificEvent1]
+}
 case class SpecificEvent2(s: String) extends GenericEvent
 case class MigratedSpecificEvent(addedField: Int, newName: String) extends GenericEvent
 case class UnrelatedEvent(y: Boolean)
@@ -22,13 +25,12 @@ case class UnrelatedEvent(y: Boolean)
 object GenericEvent {
 
   // In practice all of this could be generated via derived codecs: https://github.com/julienrf/play-json-derived-codecs
-  private val specificEvent1Format = Json.format[SpecificEvent1]
   private val specificEvent2Format = Json.format[SpecificEvent2]
   private val migratedSpecificEventFormat = Json.format[MigratedSpecificEvent]
 
   implicit val format: Format[GenericEvent] = new Format[GenericEvent] {
     override def reads(json: JsValue): JsResult[GenericEvent] = (json \ "$type").asOpt[String] match {
-      case Some(typeName) if typeName == SpecificEvent1.getClass.getName => specificEvent1Format.reads(json)
+      case Some(typeName) if typeName == SpecificEvent1.getClass.getName => Json.fromJson[SpecificEvent1](json)
       case Some(typeName) if typeName == SpecificEvent2.getClass.getName => specificEvent2Format.reads(json)
       case Some(typeName) if typeName == MigratedSpecificEvent.getClass.getName => migratedSpecificEventFormat.reads(json)
       case _ => JsError()
@@ -36,7 +38,7 @@ object GenericEvent {
 
     override def writes(o: GenericEvent): JsValue = o match {
       case evt: SpecificEvent1 =>
-        specificEvent1Format.writes(evt) ++ Json.obj("$type" -> SpecificEvent1.getClass.getName)
+        Json.toJson(evt).asInstanceOf[JsObject] ++ Json.obj("$type" -> SpecificEvent1.getClass.getName)
       case evt: SpecificEvent2 =>
         specificEvent2Format.writes(evt) ++ Json.obj("$type" -> SpecificEvent2.getClass.getName)
       case evt: MigratedSpecificEvent =>
@@ -136,6 +138,7 @@ object TestRegistry3 extends JsonSerializerRegistry {
 object TestRegistry4 extends JsonSerializerRegistry {
   override def serializers = Seq(
     JsonSerializer[GenericEvent],
+    JsonSerializer[SpecificEvent1],
     JsonSerializer[UnrelatedEvent]
   )
 
