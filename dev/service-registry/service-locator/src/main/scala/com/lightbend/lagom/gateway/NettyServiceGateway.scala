@@ -419,6 +419,13 @@ class NettyServiceGateway(lifecycle: ApplicationLifecycle, config: ServiceGatewa
     response
   }
 
+  /* As of Play 2.7.x, the default pages templates require a implicit RequestHeader.
+   * The RequestHeader is only required because down the road the templates may make user of
+   * CSFNonce header (if available).
+   *
+   * This is not relevant for the gateway, but we need to fabricate a RequestHeader to make it compile.
+   * We don't need to fill all fields, but we do our best to fill what can be filled with the data we have at hand.
+   */
   private def createRequestHeader(request: HttpRequest): RequestHeader = {
     new RequestHeader {
       override def connection: RemoteConnection = ???
