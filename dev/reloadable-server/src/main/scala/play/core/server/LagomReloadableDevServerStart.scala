@@ -178,10 +178,10 @@ object LagomReloadableDevServerStart {
 
                       val newApplication = Threads.withContextClassLoader(projectClassloader) {
                         val context = ApplicationLoader.Context.create(
-	                          environment = environment,
-	                          initialSettings = dirAndDevSettings,
-	                          devContext = Some(DevContext(sourceMapper, buildLink))
-	                        )
+                          environment = environment,
+                          initialSettings = dirAndDevSettings,
+                          devContext = Some(DevContext(sourceMapper, buildLink))
+                        )
                         val loader = ApplicationLoader(context)
                         loader.load(context)
                       }
