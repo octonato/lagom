@@ -3,11 +3,13 @@
  */
 package com.lightbend.lagom.javadsl.testkit.services;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class PublishEvent {
 
     private final int code;
 
-    public PublishEvent(int code){
+    public PublishEvent(@JsonProperty("code") int code){
         this.code = code;
     }
 
