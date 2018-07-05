@@ -5,8 +5,7 @@ package com.lightbend.lagom.scaladsl.server
 
 import java.net.URI
 
-import akka.actor.setup.ActorSystemSetup
-import akka.actor.{ ActorSystem, BootstrapSetup, CoordinatedShutdown }
+import akka.actor.ActorSystem
 import akka.event.Logging
 import com.lightbend.lagom.internal.scaladsl.client.ScaladslServiceResolver
 import com.lightbend.lagom.internal.scaladsl.server.ScaladslServerMacroImpl
@@ -19,10 +18,8 @@ import com.lightbend.lagom.scaladsl.playjson.{ EmptyJsonSerializerRegistry, Json
 import com.typesafe.config.Config
 import play.api.ApplicationLoader.Context
 import play.api._
-import play.api.inject.DefaultApplicationLifecycle
-import play.api.libs.concurrent.ActorSystemProvider.{ ApplicationShutdownReason, StopHook }
+import play.api.libs.concurrent.ActorSystemProvider.StopHook
 import play.api.mvc.EssentialFilter
-import play.core.DefaultWebCommands
 
 import scala.collection.immutable
 import scala.concurrent.{ ExecutionContext, Future, Promise }
@@ -198,13 +195,7 @@ object LagomApplicationContext {
   /**
    * A test application loader context, useful when loading the application in unit or integration tests.
    */
-  val Test = apply(Context(
-    environment = Environment.simple(),
-    devContext = None,
-    initialConfiguration = Configuration.empty,
-    lifecycle = new DefaultApplicationLifecycle
-  ))
-
+  val Test = apply(Context.create(Environment.simple()))
 }
 
 /**
