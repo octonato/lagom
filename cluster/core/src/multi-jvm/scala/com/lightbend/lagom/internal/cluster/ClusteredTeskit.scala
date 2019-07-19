@@ -43,6 +43,7 @@ object ClusterMultiNodeConfig extends MultiNodeConfig {
       akka.test.single-expect-default = 15s
 
       akka.cluster.sharding.waiting-for-state-timeout = 5s
+      akka.cluster.distributed-data.gossip-interval = 500ms
 
       # Don't terminate the actor system when doing a coordinated shutdown
       akka.coordinated-shutdown.terminate-actor-system = off
